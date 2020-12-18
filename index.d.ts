@@ -41,6 +41,39 @@ export declare class Emitter<Events extends EventsMap = DefaultEvents> {
   on<K extends keyof Events> (this: this, event: K, cb: Events[K]): Unsubscribe
 
   /**
+   * Add a listener that will be automatically removed after the first invocation.
+   *
+   * @param event
+   * @param cb
+   */
+  once<K extends keyof Events> (
+    this: this,
+    event: K,
+    cb: Events[K]
+  ): Unsubscribe
+
+  /**
+   * Unbind an event listener function.
+   *
+   * ```js
+   * const cb = () => {}
+   *
+   * // Unbind only this callback for this event
+   * ee.off('eventName', cb);
+   *
+   * // Unbind all callbacks for this event
+   * ee.off('eventName');
+   *
+   * // Unbind all callbacks for every event
+   * ee.off();
+   * ```
+   *
+   * @param event Optional event name.
+   * @param cb Optional listener function.
+   */
+  off<K extends keyof Events> (this: this, event?: K, cb?: Events[K]): void
+
+  /**
    * Calls each of the listeners registered for a given event.
    *
    * ```js

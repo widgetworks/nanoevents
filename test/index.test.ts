@@ -134,3 +134,136 @@ it('allows to replace listeners', () => {
   ee1.emit('B')
   expect(bCalls).toEqual(1)
 })
+
+/**
+ * @wiwo extensions:
+ */
+describe('@wiwo extensions:', () => {
+  it('unbinds listener added with "once"', () => {
+    let ee = createNanoEvents()
+
+    let calls1: number[] = []
+    ee.once('event', a => {
+      calls1.push(a)
+    })
+
+    ee.emit('event', 1)
+    ee.emit('event', 2)
+
+    expect(calls1).toEqual([1])
+  })
+
+  it('`off` should not create new event lists', () => {
+    let ee = createNanoEvents()
+
+    let cb = (a: number) => {}
+    ee.off('UNKNOWN_EVENT', cb)
+
+    // Calling `off` should not add extra event lists
+    expect(Object.keys(ee.events)).toEqual([])
+  })
+
+  it('`off` should not unbind if callback is not registered with event', () => {
+    let ee = createNanoEvents()
+
+    let calls1: number[] = []
+    let cb = (a: number) => {
+      calls1.push(a)
+    }
+    ee.on('event', cb)
+
+    ee.off('UNKNOWN_EVENT', cb)
+
+    // Should still be registered, so this should still be called
+    ee.emit('event', 1)
+
+    expect(calls1).toEqual([1])
+  })
+
+  it('`off` should unbind registered event listener', () => {
+    let ee = createNanoEvents()
+
+    let calls1: number[] = []
+    let cb = (a: number) => {
+      calls1.push(a)
+    }
+    ee.on('event', cb)
+    ee.emit('event', 1)
+
+    ee.off('event', cb)
+    ee.emit('event', 1)
+
+    // Should just be a single invocation
+    expect(calls1).toEqual([1])
+  })
+
+  it('invoking unbind after `off` should do nothing', () => {
+    let ee = createNanoEvents()
+
+    let calls1: number[] = []
+    let cb = (a: number) => {
+      calls1.push(a)
+    }
+    let unbind = ee.on('event', cb)
+    ee.emit('event', 1)
+
+    ee.off('event', cb)
+    unbind()
+
+    ee.emit('event', 1)
+
+    // Should just be a single invocation
+    expect(calls1).toEqual([1])
+  })
+
+  it('invoking `off` without callback should unbind all listeners for that event', () => {
+    let ee = createNanoEvents()
+
+    let calls1: string[] = []
+    ee.on('event1', () => {
+      calls1.push('event1')
+    })
+    ee.on('event1', () => {
+      calls1.push('event1')
+    })
+    ee.on('event2', () => {
+      calls1.push('event2')
+    })
+    ee.emit('event1')
+
+    ee.off('event1')
+
+    // should have no effect
+    ee.emit('event1')
+
+    // should still be called
+    ee.emit('event2')
+
+    expect(calls1).toEqual(['event1', 'event1', 'event2'])
+    expect(ee.events.event1).toEqual([])
+    expect(ee.events.event2).toHaveLength(1)
+  })
+
+  it('invoking `off` without any parameters should unbind all listeners for all events', () => {
+    let ee = createNanoEvents()
+
+    let calls1: string[] = []
+    ee.on('event1', () => {
+      calls1.push('event1')
+    })
+    ee.on('event2', () => {
+      calls1.push('event2')
+    })
+    ee.emit('event1')
+
+    ee.off()
+
+    // should have no effect
+    ee.emit('event1')
+    ee.emit('event2')
+
+    expect(calls1).toEqual(['event1'])
+    expect(ee.events).toEqual({})
+  })
+})
+// End of '@wiwo extensions:'.

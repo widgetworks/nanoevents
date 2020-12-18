@@ -2,12 +2,9 @@
 
 Simple and tiny event emitter library for JavaScript.
 
-* Only **72 bytes** (minified and gzipped).
-  It uses [Size Limit] to control size.
 * `on` method returns `unbind` function. You don’t need to save
   callback to variable for `removeListener`.
 * TypeScript and ES modules support.
-* No aliases, just `emit` and `on` methods.
   No Node.js [EventEmitter] compatibility.
 
 ```js
@@ -15,16 +12,52 @@ import { createNanoEvents } from 'nanoevents'
 
 const emitter = createNanoEvents()
 
+/**
+ * const unbind = emitter.on('eventName', listener)
+ */
 const unbind = emitter.on('tick', volume => {
   summary += volume
 })
 
+
+/**
+ * emitter.emit('eventName', ...args)
+ */
 emitter.emit('tick', 2)
 summary //=> 2
 
 unbind()
 emitter.emit('tick', 2)
 summary //=> 2
+
+
+/**
+ * const unbind = emitter.once('eventName', listener)
+ */
+// Will be automatically unbound after event is emitted
+const unbind = emitter.once('tock', volume => {
+  summary += volume
+})
+
+emitter.emit('tock', 2)
+summary //=> 4
+emitter.emit('tock', 2) // no change because the listener was unbound after the previous event
+summary //=> 4
+
+
+/**
+ * emitter.off('eventName', listener)
+ * emitter.off('eventName')
+ * emitter.off()
+ */
+// Unbind single event listener
+emitter.off('tick', callback)
+
+// Unbind all listeners for this event
+emitter.off('tick')
+
+// Unbind all listeners for all events
+emitter.off()
 ```
 
 [EventEmitter]: https://nodejs.org/api/events.html
@@ -208,31 +241,50 @@ emitter.events //=> { tick: [ [Function] ] }
 
 ## Once
 
-If you need add event listener only for first event dispatch,
-you can use this snippet:
+Use `once` if you need to add event listener only for first event dispatch:
 
 ```js
-class Ticker {
-  constructor () {
-    this.emitter = createNanoEvents()
-  }
-  …
-  once (event, callback) {
-    const unbind = this.emitter.on(event, (...args) => {
-      unbind()
-      callback(...args)
-    })
-    return unbind
-  }
-}
+emitter.once('tick', number => {
+  console.log(number)
+})
+
+emitter.emit('tick', 1)
+// Prints 1
+emitter.emit('tick', 5)
+// Prints nothing - listener has already been removed
 ```
 
 
-## Remove All Listeners
+## Remove Listeners
+
+Remove single listener for event:
+
+```js
+const cb = () => { };
+emitter.on('event1', cb)
+emitter.on('event2', cb)
+
+// Remove `cb' for 'event1' listener only, will remain for 'event2'
+emitter.off('event1', cb)
+```
+
+
+Remove all listeners for named event:
 
 ```js
 emitter.on('event1', () => { })
 emitter.on('event2', () => { })
 
-emitter.events = { }
+// Remove all 'event1' listeners only
+emitter.off('event1')
+```
+
+
+Remove all listeners:
+
+```js
+emitter.on('event1', () => { })
+emitter.on('event2', () => { })
+
+emitter.off()
 ```

@@ -15,6 +15,16 @@ ee.on('set', a => {
   fn(a)
 })
 
+ee.once('set', value => {
+  console.log(`value=`, value)
+})
+
+let addCb = () => {}
+ee.on('add', addCb)
+ee.off('add', addCb)
+ee.off('add')
+ee.off()
+
 ee.emit('set', 'a', 1)
 ee.emit('add', 2)
 ee.emit('tick')
